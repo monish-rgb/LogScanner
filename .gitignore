@@ -33,5 +33,9 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 
+# Claude
+CLAUDE.md
+.claude/
+
 # Migrations (keep the versions)
 backend/migrations/versions/__pycache__/
