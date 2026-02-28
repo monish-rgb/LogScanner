@@ -34,7 +34,7 @@ Focus on:
 - High risk scores
 - Abnormal response times
 - Access to high-risk URL categories
-- Patterns suggesting data exfiltration or C2 communication
+- Patterns suggesting data exfiltration
 - Unusual number of requests from a single IP in a short time frame
 - Repeated failed/blocked attempts from the same user or IP
 
@@ -75,7 +75,7 @@ def analyze_log_file(log_file_id):
 
         for chunk_index, chunk in enumerate(chunks):
             formatted = format_entries_for_prompt(chunk)
-
+            print("Formatted entries:", formatted,flush=True)
             message = client.messages.create(
                 model=model,
                 max_tokens=4096,
@@ -103,6 +103,7 @@ def analyze_log_file(log_file_id):
                     explanation=anomaly.get("explanation", "No explanation provided"),
                     severity=anomaly.get("severity", "medium"),
                 )
+                print("AI result",result,flush=True)
                 db.session.add(result)
                 all_results.append(result)
 

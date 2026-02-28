@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import func
@@ -7,6 +9,8 @@ from app.models.log_file import LogFile
 from app.models.log_entry import LogEntry
 from app.models.analysis_result import AnalysisResult
 from app.services.analysis_service import analyze_log_file
+
+ANALYSIS_TIMEOUT_MINUTES = 5
 
 dashboard_bp = Blueprint("dashboard", __name__)
 
@@ -100,11 +104,17 @@ def trigger_analysis(file_id):
     if log_file.upload_status != "parsed":
         return jsonify({"error": "bad_request", "message": "File must be parsed before analysis"}), 400
 
+    # Reset stuck "analyzing" status after timeout
     if log_file.analysis_status == "analyzing":
-        return jsonify({"error": "bad_request", "message": "Analysis already in progress"}), 400
+        timeout_threshold = datetime.utcnow() - timedelta(minutes=ANALYSIS_TIMEOUT_MINUTES)
+        if log_file.uploaded_at and log_file.uploaded_at < timeout_threshold:
+            log_file.analysis_status = "failed"
+            db.session.commit()
+        else:
+            return jsonify({"error": "bad_request", "message": "Analysis already in progress"}), 400
 
     # Clear previous results if re-analyzing
-    if log_file.analysis_status == "completed":
+    if log_file.analysis_status in ("completed", "failed"):
         AnalysisResult.query.filter_by(log_file_id=file_id).delete()
         LogEntry.query.filter_by(log_file_id=file_id).update({"is_anomalous": False})
         db.session.commit()

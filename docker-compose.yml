@@ -27,6 +27,7 @@ services:
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-super-secret-dev-key}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       MAX_UPLOAD_SIZE_MB: "100"
+      PYTHONUNBUFFERED: "1"
     ports:
       - "5000:5000"
     volumes:
