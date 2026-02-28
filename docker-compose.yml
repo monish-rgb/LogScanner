@@ -6,13 +6,13 @@ services:
     environment:
       POSTGRES_DB: logscanner
       POSTGRES_USER: logscanner
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U logscanner"]
+      test: [ "CMD-SHELL", "pg_isready -U logscanner" ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
       dockerfile: Dockerfile
     environment:
       FLASK_ENV: ${FLASK_ENV:-development}
-      DATABASE_URL: postgresql://logscanner:${DB_PASSWORD:-changeme}@db:5432/logscanner
+      DATABASE_URL: postgresql://logscanner:${DB_PASSWORD:-1234}@db:5432/logscanner
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-super-secret-dev-key}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       MAX_UPLOAD_SIZE_MB: "100"
@@ -36,7 +36,7 @@ services:
       db:
         condition: service_healthy
     command: >
-      sh -c "flask db upgrade && gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 120 wsgi:app"
+      sh -c "if [ ! -d migrations ]; then flask db init && flask db migrate -m 'initial'; fi && flask db upgrade && gunicorn --bind 0.0.0.0:5000 --workers 2 --timeout 120 wsgi:app"
 
   frontend:
     build:
