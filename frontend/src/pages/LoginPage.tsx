@@ -23,7 +23,7 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white">LogScanner</h1>
-          <p className="text-slate-400 mt-2">SOC Analyst Log Analysis Platform</p>
+          <p className="text-slate-400 mt-2">Log Analysis Platform</p>
         </div>
         <div className="bg-slate-800 rounded-lg shadow-xl p-8">
           <h2 className="text-xl font-semibold text-white mb-6">Sign In</h2>
