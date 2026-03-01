@@ -18,23 +18,27 @@ Upload a log file, and LogScanner parses it, stores the entries in a database, a
 
 ## Tech Stack
 
-| Layer      | Technology              | Version   |
-|------------|-------------------------|-----------|
-| Frontend   | React                   | 19.2.0    |
-| Frontend   | TypeScript              | 5.9.3     |
-| Frontend   | Vite                    | 7.3.1     |
-| Frontend   | TailwindCSS             | 4.2.1     |
-| Frontend   | React Router            | 7.13.1    |
-| Frontend   | Axios                   | 1.13.5    |
-| Backend    | Python                  | 3.12      |
-| Backend    | Flask                   | 3.1.0     |
-| Backend    | SQLAlchemy         (Flask-SQLAlchemy 3.1.1)
-| Backend    | Flask-JWT-Extended      | 4.7.1     |
-| Backend    | Gunicorn                | 23.0.0    |
-| Backend    | Anthropic Python SDK    | 0.42.0    |
-| Database   | PostgreSQL              | 16        |
-| Infra      | Docker Compose          | 3.9       |
-| Infra      | Nginx                   | alpine    |
+**Frontend**
+
+- React 19 + TypeScript
+- Vite (dev server & bundler)
+- TailwindCSS v4
+- React Router
+- Axios
+
+**Backend**
+
+- Python 3.12 + Flask
+- SQLAlchemy (Flask-SQLAlchemy)
+- Flask-JWT-Extended (auth)
+- Gunicorn (WSGI server)
+- Anthropic Python SDK (Claude API)
+
+**Database & Infrastructure**
+
+- PostgreSQL 16
+- Docker Compose
+- Nginx (production reverse proxy)
 
 ---
 
@@ -59,7 +63,7 @@ This is the easiest way to get everything running. Three containers — database
 1. Clone the repo:
 
    ```bash
-   git clone https://github.com/your-username/LogScanner.git
+   git clone https://github.com/monish-rgb/LogScanner.git
    cd LogScanner
    ```
 
@@ -159,161 +163,6 @@ POST /api/auth/register
   "created_at": "2025-01-15T10:30:00Z"
 }
 ```
-
-### File Upload
-
-#### Upload a Log File
-
-```
-POST /api/upload
-Authorization: Bearer <token>
-
-// Form field: "file" (accepts .log, .txt, .csv — max 100MB)
-
-// Response (202)
-{
-  "file_id": 1,
-  "original_filename": "proxy_logs_jan.log",
-  "entry_count": 0,
-  "upload_status": "processing",
-  "analysis_status": "pending"
-}
-```
-
-#### Check Upload Status
-
-```
-GET /api/upload/1/status
-Authorization: Bearer <token>
-
-// Response (200)
-{
-  "file_id": 1,
-  "upload_status": "parsed",
-  "analysis_status": "pending",
-  "entry_count": 4523
-}
-```
-
-### Dashboard
-
-#### List Uploaded Files
-
-```
-GET /api/dashboard/files?page=1&per_page=10
-Authorization: Bearer <token>
-
-// Response (200)
-{
-  "files": [
-    {
-      "id": 1,
-      "original_filename": "proxy_logs_jan.log",
-      "file_size": 20,
-      "entry_count": 4523,
-      "upload_status": "parsed",
-      "analysis_status": "completed",
-      "uploaded_at": "2025-01-15T10:30:00Z"
-    }
-  ],
-  "total": 1,
-  "page": 1,
-  "per_page": 10,
-  "pages": 1
-}
-```
-
-#### Get Log Entries (paginated)
-
-```
-GET /api/dashboard/files/1/entries?page=1&per_page=50&anomalous_only=false
-Authorization: Bearer <token>
-
-// Response (200)
-{
-  "entries": [
-    {
-      "id": 1,
-      "line_number": 1,
-      "timestamp": "2025-01-15",
-      "source_ip": "192.168.1.100",
-      "destination_url": "https://example.com",
-      "user": "john.doe@company.com",
-      "action": "ALLOWED",
-      "risk_score": 25,
-      "bytes_transferred": 50000,
-      "is_anomalous": false,
-      "raw_line": "..."
-    }
-  ],
-  "total": 4523,
-  "page": 1,
-  "per_page": 50,
-  "pages": 91
-}
-```
-
-#### Trigger AI Analysis
-
-```
-POST /api/dashboard/files/1/analyze
-Authorization: Bearer <token>
-
-// Response (200)
-{
-  "status": "completed",
-  "anomalies_found": 12
-}
-```
-
-#### Get Anomalies
-
-```
-GET /api/dashboard/files/1/anomalies
-Authorization: Bearer <token>
-
-// Response (200)
-{
-  "anomalies": [
-    {
-      "id": 1,
-      "log_entry_id": 42,
-      "anomaly_type": "data_exfiltration",
-      "confidence_score": 0.92,
-      "severity": "high",
-      "explanation": "Unusually large outbound transfer of 45MB to an uncategorized external host during off-hours.",
-      "created_at": "2025-01-15T11:00:00Z"
-    }
-  ],
-  "total": 12
-}
-```
-
-#### Get Analysis Summary
-
-```
-GET /api/dashboard/files/1/summary
-Authorization: Bearer <token>
-
-// Response (200)
-{
-  "total_entries": 4523,
-  "total_anomalies": 12,
-  "severity_breakdown": {
-    "low": 3,
-    "medium": 5,
-    "high": 3,
-    "critical": 1
-  },
-  "top_anomaly_types": [
-    { "type": "data_exfiltration", "count": 4 },
-    { "type": "suspicious_url", "count": 3 }
-  ],
-  "analysis_status": "completed"
-}
-```
-
----
 
 ## AI/LLM Approach
 
