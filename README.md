@@ -166,7 +166,7 @@ POST /api/auth/register
 
 ## AI/LLM Approach
 
-This is the core of what makes LogScanner useful — instead of writing static rules, it uses Claude (claude-sonnet-4-20250514) as a SOC analyst to catch anomalies.
+This is what makes LogScanner useful — instead of writing static rules, it uses Claude (claude-sonnet-4-20250514) reasoning ability as a SOC analyst to catch anomalies.
 
 ### What the AI Does
 
@@ -181,7 +181,7 @@ The AI examines parsed log entries and classifies them into threat categories:
 - **dns_tunneling** — DNS-based data exfiltration
 - **unauthorized_access** — access to restricted resources
 
-Each finding gets a confidence score (0.0–1.0), a severity level (low/medium/high/critical), and a short explanation in plain English.
+Each finding gets a confidence score (0.0–1.0), a severity level (low/medium/high/critical), and a short explanation.
 
 ### How It's Prompted
 
