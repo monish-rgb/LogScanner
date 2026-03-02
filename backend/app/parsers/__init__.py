@@ -13,4 +13,4 @@ def get_parser(filepath):
     if parser.can_parse(sample_lines):
         return parser
 
-    raise ValueError("Unsupported log format. Please upload ZScaler web proxy logs.")
+    raise ValueError("Unsupported log format")

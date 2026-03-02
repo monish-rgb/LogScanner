@@ -36,16 +36,6 @@ class ZScalerParser:
         "fileclass": "file_class",
     }
 
-    # LOG_FIELDS = [
-    #     "date", "time", "action", "login", "department", "location",
-    #     "clientip", "host", "protocol", "statuscode", "requestmethod",
-    #     "contenttype", "requestsize", "responsesize", "urlcategory",
-    #     "pagerisk", "transactionsize", "clienttranstime", "serverip",
-    #     "threatname", "threatclass", "threatcategory", "threatseverity",
-    #     "filetype", "fileclass", "useragent", "url",
-    # ]
-
-
     def parse_file(self, filepath, log_file_id):
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
