@@ -36,40 +36,15 @@ class ZScalerParser:
         "fileclass": "file_class",
     }
 
-    # Full ZScaler CSV format (27 fields)
-    LOG_FIELDS = [
-        "date", "time", "action", "login", "department", "location",
-        "clientip", "host", "protocol", "statuscode", "requestmethod",
-        "contenttype", "requestsize", "responsesize", "urlcategory",
-        "pagerisk", "transactionsize", "clienttranstime", "serverip",
-        "threatname", "threatclass", "threatcategory", "threatseverity",
-        "filetype", "fileclass", "useragent", "url",
-    ]
+    # LOG_FIELDS = [
+    #     "date", "time", "action", "login", "department", "location",
+    #     "clientip", "host", "protocol", "statuscode", "requestmethod",
+    #     "contenttype", "requestsize", "responsesize", "urlcategory",
+    #     "pagerisk", "transactionsize", "clienttranstime", "serverip",
+    #     "threatname", "threatclass", "threatcategory", "threatseverity",
+    #     "filetype", "fileclass", "useragent", "url",
+    # ]
 
-    # Compact ZScaler CSV format
-    LOG_FIELDS_COMPACT = [
-        "date", "time", "action", "login", "department", "location",
-        "clientip", "host", "protocol", "statuscode", "requestmethod",
-        "contenttype", "requestsize", "responsesize", "urlcategory",
-        "pagerisk", "useragent", "url",
-    ]
-
-    #field validators for csv format
-    FIELD_VALIDATORS = {
-        "date":            lambda v: bool(re.match(r"\d{1,2}/\d{1,2}/\d{4}|\d{4}-\d{2}-\d{2}", v)),
-        "time":            lambda v: bool(re.match(r"\d{2}:\d{2}:\d{2}", v)),
-        "action":          lambda v: v.upper() in ("ALLOWED", "BLOCKED", "ISOLATED", "ICAP_RESPONSE"),
-        "login":           lambda v: "@" in v or v == "-",
-        "clientip":        lambda v: bool(re.match(r"\d{1,3}(\.\d{1,3}){3}", v)),
-        "statuscode":      lambda v: v.isdigit() and 100 <= int(v) <= 599,
-        "requestmethod":   lambda v: v.upper() in ("GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH", "CONNECT"),
-        "requestsize":     lambda v: v.isdigit(),
-        "responsesize":    lambda v: v.isdigit(),
-        "pagerisk":        lambda v: v.isdigit() and 0 <= int(v) <= 100,
-        "serverip":        lambda v: bool(re.match(r"\d{1,3}(\.\d{1,3}){3}", v)) or v == "-",
-        "url":             lambda v: v.startswith("http://") or v.startswith("https://") or v == "-",
-        "protocol":        lambda v: v.upper() in ("HTTP", "HTTPS", "FTP", "TUNNEL"),
-    }
 
     def parse_file(self, filepath, log_file_id):
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
@@ -77,17 +52,16 @@ class ZScalerParser:
 
         stripped = content.strip()
 
-        # Try multi-line JSON parsing first (array, single object, or concatenated objects)
+        # checking for JSON parsing first
         if stripped.startswith("[") or stripped.startswith("{"):
             json_entries = list(self._parse_json_content(content, log_file_id))
             if json_entries:
                 yield from json_entries
                 return
 
-        # Fall back to CSV parsing — join continuation lines (ending with comma)
+        
         accumulated = ""
         entry_number = 0
-
         for raw_line in content.splitlines():
             line = raw_line.strip()
             if not line:
@@ -115,23 +89,23 @@ class ZScalerParser:
             accumulated = ""
 
         # Handle any remaining accumulated line
-        if accumulated:
-            entry_number += 1
-            try:
-                parsed = self.parse_line(accumulated, entry_number)
-                parsed["log_file_id"] = log_file_id
-                parsed["raw_line"] = accumulated
-                yield parsed
-            except Exception:
-                yield {
-                    "log_file_id": log_file_id,
-                    "line_number": entry_number,
-                    "raw_line": accumulated,
-                }
+        # if accumulated:
+        #     entry_number += 1
+        #     try:
+        #         parsed = self.parse_line(accumulated, entry_number)
+        #         parsed["log_file_id"] = log_file_id
+        #         parsed["raw_line"] = accumulated
+        #         yield parsed
+        #     except Exception:
+        #         yield {
+        #             "log_file_id": log_file_id,
+        #             "line_number": entry_number,
+        #             "raw_line": accumulated,
+        #         }
 
     def _parse_json_content(self, content, log_file_id):
         """Parse JSON content: array, single object, or concatenated multi-line objects."""
-        # Remove trailing commas before } or ] (common in ZScaler exports)
+        # Remove trailing commas before } or ]
         cleaned = re.sub(r',\s*([}\]])', r'\1', content.strip())
 
         # Try as a single JSON document (array or object)
@@ -157,30 +131,41 @@ class ZScalerParser:
             pass
 
         # Try concatenated JSON objects (multiple objects not wrapped in an array)
-        decoder = json.JSONDecoder()
-        pos = 0
+        accumulated = ""
+        brace_count = 0
         entry_num = 0
-        while pos < len(cleaned):
-            # Skip whitespace
-            while pos < len(cleaned) and cleaned[pos] in ' \t\n\r':
-                pos += 1
-            if pos >= len(cleaned):
-                break
-            if cleaned[pos] != '{':
-                pos += 1
+
+        for raw_line in cleaned.splitlines():
+            line = raw_line.strip()
+            if not line:
                 continue
-            try:
-                obj, end_pos = decoder.raw_decode(cleaned, pos)
+
+            accumulated = accumulated + " " + line if accumulated else line
+
+            for char in line:
+                if char == '{':
+                    brace_count += 1
+                elif char == '}':
+                    brace_count -= 1
+
+            if brace_count != 0:
+                continue
+
+            accumulated = accumulated.strip()
+            if accumulated.startswith("{"):
                 entry_num += 1
-                if isinstance(obj, dict):
+                try:
+                    obj = json.loads(accumulated)
                     parsed = self._map_fields({k.lower(): v for k, v in obj.items()})
                     parsed["line_number"] = entry_num
                     parsed["log_file_id"] = log_file_id
                     parsed["raw_line"] = json.dumps(obj)
                     yield parsed
-                pos = end_pos
-            except json.JSONDecodeError:
-                pos += 1
+                except json.JSONDecodeError:
+                    pass
+
+            accumulated = ""
+            brace_count = 0
 
     def can_parse(self, sample_lines):
         if not sample_lines:
@@ -225,27 +210,8 @@ class ZScalerParser:
         return self._map_fields({k.lower(): v for k, v in data.items()})
 
 
-    # ─── Validate a single parsed row dict ────────────────────
-    def _validate_csv_row(self, raw: dict) -> tuple[bool, list[str]]:
-        """
-        Returns (is_valid, list_of_issues).
-        Skips validation for empty/dash/None values — they are optional fields.
-        """
-        issues = []
-        for field, validator in self.FIELD_VALIDATORS.items():
-            value = raw.get(field, "").strip()
-            if not value or value in ("-", "None", "N/A"):
-                continue  # skip missing/optional fields
-            try:
-                if not validator(value):
-                    issues.append(f"Field '{field}' has unexpected value: '{value}'")
-            except Exception as e:
-                issues.append(f"Field '{field}' validator error: {e}")
-        return (len(issues) == 0), issues
-
-    # ─── detect CSV fields by value patterns ──────────────
+    # detect CSV fields by value patterns 
     def _detect_csv_fields(self, fields):
-        """Fallback: identify fields by their values when positional mapping fails."""
         raw = {}
         used = set()
         ip_re = re.compile(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
@@ -281,7 +247,7 @@ class ZScalerParser:
             if "useragent" not in raw and any(h in v.lower() for h in ua_hints):
                 raw["useragent"] = v; used.add(i); continue
 
-        # Detect timestamp (try parsing each unused field)
+        # Detect timestamp 
         for i, value in enumerate(fields):
             if i in used:
                 continue
@@ -289,7 +255,7 @@ class ZScalerParser:
             if v and self._parse_timestamp(v) is not None:
                 raw["datetime"] = v; used.add(i); break
 
-        # Detect URL (domain-like pattern with dots)
+        # Detect URL
         url_re = re.compile(r"^https?://|^[\w.-]+\.\w{2,}")
         for i, value in enumerate(fields):
             if i in used:
@@ -300,35 +266,13 @@ class ZScalerParser:
 
         return raw
 
-    # ─── CSV line parser with validation ──────────────────────
+    # CSV line parser (pattern-matching only) 
     def _parse_csv_line(self, line):
         reader = csv.reader(io.StringIO(line))
         fields = next(reader)
 
-        # Pick field list based on column count
-        field_list = self.LOG_FIELDS if len(fields) > len(self.LOG_FIELDS_COMPACT) else self.LOG_FIELDS_COMPACT
-
-        raw = {}
-        for i, value in enumerate(fields):
-            if i < len(field_list):
-                raw[field_list[i]] = value.strip()
-            else:
-                raw[f"field_{i}"] = value.strip()
-
-        # ── Validate before any further processing ────────────
-        is_valid, issues = self._validate_csv_row(raw)
-        if not is_valid:
-            # Positional mapping failed — try auto-detection by value
-            auto_raw = self._detect_csv_fields(fields)
-            if auto_raw:
-                return self._map_fields(auto_raw)
-
-        # Combine separate date and time fields into timestamp
-        if "date" in raw and "time" in raw:
-            raw["datetime"] = f"{raw['date']} {raw['time']}"
-            del raw["date"]
-            del raw["time"]
-
+        # Detect fields purely by value patterns
+        raw = self._detect_csv_fields(fields)
         return self._map_fields(raw)
 
     def _map_fields(self, raw):

@@ -38,7 +38,9 @@ Focus on:
 - Unusual number of requests from a single IP in a short time frame
 - Repeated failed/blocked attempts from the same user or IP
 
-IMPORTANT: Respond ONLY with the JSON array. No other text."""
+IMPORTANT:
+- Return at most ONE anomaly per line_number. If a single log entry matches multiple anomaly types, report only the MOST severe/relevant one.
+- Respond ONLY with the JSON array. No other text."""
 
 
 def analyze_log_file(log_file_id):
@@ -88,6 +90,15 @@ def analyze_log_file(log_file_id):
 
             response_text = message.content[0].text
             anomalies = parse_claude_response(response_text)
+
+            # Deduplicate: keep only the highest confidence anomaly per line
+            best_per_line = {}
+            for anomaly in anomalies:
+                line_num = anomaly.get("line_number")
+                existing = best_per_line.get(line_num)
+                if not existing or float(anomaly.get("confidence_score", 0)) > float(existing.get("confidence_score", 0)):
+                    best_per_line[line_num] = anomaly
+            anomalies = list(best_per_line.values())
 
             entry_map = {e.line_number: e for e in chunk}
 
