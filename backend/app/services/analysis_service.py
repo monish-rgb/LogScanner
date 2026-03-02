@@ -1,3 +1,9 @@
+# /**
+#  * AI USAGE: This file uses the Anthropic Claude API (claude-sonnet-4-20250514) for
+#   - Analyzing batches of parsed log entries for security anomalies
+#   - Returns anomaly classifications with anomaly_type, severity, confidence_score, and explanations as JSON
+#  */
+
 import json
 import re
 import time

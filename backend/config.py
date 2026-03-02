@@ -1,3 +1,10 @@
+# /**
+#  * AI USAGE: This file uses the Anthropic Claude API (claude-sonnet-4-20250514) for
+#  *  Configuring the Anthropic API key and model name used by the analysis service
+#  *  Stores ANTHROPIC_API_KEY, NTHROPIC_MODEL in the app config
+#  *  Provides these variables to analysis_service.py which calls the Claude API
+#  */
+
 import os
 from datetime import timedelta
 
