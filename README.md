@@ -10,7 +10,7 @@ Upload a log file, and LogScanner parses it, stores the entries in a database, a
 2. The Upload blueprint saves the file, auto-detects the format, and parses it into individual `LogEntry` rows.
 3. User clicks "Analyze with AI" on the dashboard tab once logged in.
 4. The Analysis service chunks all entries into groups of 500 and sends each chunk to the Claude API with a SOC analyst system prompt.
-5. Claude returns a JSON array — one linked back to a specific log line with a severity, confidence score, and explanation.
+5. Claude returns a JSON array - one linked back to a specific log line with a severity, confidence score, and explanation.
 6. Results are stored as `AnalysisResult` records and the matching log entries get flagged as anomalous.
 7. The dashboard shows highlighted rows and anomaly cards so you can quickly see what needs attention.
 
@@ -47,7 +47,7 @@ Upload a log file, and LogScanner parses it, stores the entries in a database, a
 Before you start, make sure you have:
 
 - **Docker** and **Docker Compose** installed (for the local setup)
-- An **Anthropic API key** — you need this for the AI analysis feature.
+- An **Anthropic API key**  you need this for the AI analysis feature.
 - **Node.js 20+** and **npm** (only if running the frontend outside Docker)
 - **Python 3.12+** and **pip** (only if running the backend outside Docker)
 - **PostgreSQL 16** (only if running the database outside Docker)
@@ -58,7 +58,7 @@ Before you start, make sure you have:
 
 ### Option 1: Docker (easy way and fast setup)
 
-This is the easiest way to get everything running. Three containers — database, backend, frontend — all connected together.
+This is the easiest way to get everything running. Three containers (database, backend, frontend) all connected together.
 
 1. Clone the repo:
 
@@ -166,22 +166,22 @@ POST /api/auth/register
 
 ## AI/LLM Approach
 
-This is what makes LogScanner useful — instead of writing static rules, it uses Claude (claude-sonnet-4-20250514) reasoning ability as a SOC analyst to catch anomalies.
+This is what makes LogScanner useful - instead of writing static rules, it uses Claude (claude-sonnet-4-20250514) reasoning ability as a SOC analyst to catch anomalies.
 
 ### What the AI Does
 
 The AI examines parsed log entries and classifies them into threat categories:
 
-- **data_exfiltration** — unusually large outbound transfers
-- **suspicious_url** — connections to uncategorized or sketchy domains
-- **brute_force** — repeated blocked attempts from the same source
-- **unusual_traffic_volume** — abnormal request patterns
-- **policy_violation** — actions that break security policies
-- **credential_stuffing** — mass login attempts
-- **dns_tunneling** — DNS-based data exfiltration
-- **unauthorized_access** — access to restricted resources
+- **data_exfiltration** - unusually large outbound transfers
+- **suspicious_url** - connections to uncategorized or sketchy domains
+- **brute_force** - repeated blocked attempts from the same source
+- **unusual_traffic_volume** - abnormal request patterns
+- **policy_violation** - actions that break security policies
+- **credential_stuffing** - mass login attempts
+- **dns_tunneling** - DNS-based data exfiltration
+- **unauthorized_access** - access to restricted resources
 
-Each finding gets a confidence score (0.0–1.0), a severity level (low/medium/high/critical), and a short explanation.
+Each finding gets a confidence score (0.0 to 1.0), a severity level (low/medium/high/critical), and a short explanation.
 
 ### How It's Prompted
 
