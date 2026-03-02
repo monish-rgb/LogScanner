@@ -115,7 +115,7 @@ createdb logscanner
 cd backend
 pip install -r requirements.txt
 
-# Set environment variables (or use a .env file)
+# Set environment variables
 export DATABASE_URL=postgresql://localhost:5432/logscanner
 export JWT_SECRET_KEY=dev-secret
 export ANTHROPIC_API_KEY=sk-ant-your-key-here
@@ -228,7 +228,7 @@ Entries are chunked into groups of **500** and sent sequentially to the API with
 
 ## Example Log Files for Testing
 
-You can create test files in any of the three supported formats. Save them as `.log`, `.txt`, or `.csv` and upload through the UI only json and csv format supported in the files
+You can create test files in any of the three supported formats. Save them as `.log`, `.txt`, or `.csv` and upload through the UI only json and csv data format supported in the files
 
 ### ZScaler CSV Format (.csv)
 
