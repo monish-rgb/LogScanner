@@ -164,7 +164,7 @@ POST /api/auth/register
 }
 ```
 
-## AI/LLM Approach
+## AI/LLM Approach for Anamoly detection
 
 This is what makes LogScanner useful - instead of writing static rules, it uses Claude (claude-sonnet-4-20250514) reasoning ability as a SOC analyst to catch anomalies.
 
