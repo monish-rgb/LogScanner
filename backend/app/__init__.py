@@ -16,13 +16,7 @@ def create_app(config_name=None):
     config_key = config_name or os.environ.get("FLASK_ENV", "development")
     app.config.from_object(config_map.get(config_key, "config.DevelopmentConfig"))
 
-    CORS(app, resources={r"/api/*": {"origins": ["*","https://logscannerapp.onrender.com"]}})
-    # @app.after_request
-    # def add_cors_headers(response):
-    #     response.headers["Access-Control-Allow-Origin"] = "*"
-    #     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    #     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    #     return response
+    CORS(app, resources={r"/api/*": {"origins": "*", "allow_headers": ["Content-Type", "Authorization"], "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"]}})
 
     db.init_app(app)
     jwt.init_app(app)
